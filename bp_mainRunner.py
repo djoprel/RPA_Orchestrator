@@ -26,13 +26,13 @@ def __main__():
                     requestProcessStart(commandPayload['scheduleName'])
                 case "addToQueue":
                     print('Adding data to queue...')
-                    #addToQueue(commandPayload['scheduleName'],commandPayload['csvData'],commandPayload['priority'])
+                    addToQueue(commandPayload['scheduleName'],commandPayload['csvData'],commandPayload['priority'])
                 case "startNotifications":
                     print('Starting Notification Runner...')
-                    #startNotifications()
+                    startNotifications()
                 case "stopNotifications":
                     print('Stopping Notification Runner...')
-                    #stopNotifications()
+                    stopNotifications()
                 case _:
                     print(f"Error: command '{c['command']}' was not recognized")
                     commands.loc[i,'status'] = "Error"
