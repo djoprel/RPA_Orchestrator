@@ -1,0 +1,21 @@
+let
+  Source = Folder.Files("---INSERT DATASHARE FOLDER---"),
+  #"Filtered rows" = Table.SelectRows(Source, each Text.StartsWith([Name], "bp_processQueue")),
+  #"Filtered hidden files" = Table.SelectRows(#"Filtered rows", each [Attributes]?[Hidden]? <> true),
+  #"Added custom" = let
+    rootPath = Text.TrimEnd(Value.Metadata(Value.Type(#"Filtered hidden files"))[FileSystemTable.RootPath]?, "\"),
+    combinePaths = (path1, path2) => Text.Combine({Text.TrimEnd(path1, "\"), path2}, "\"),
+    getRelativePath = (path, relativeTo) => Text.Middle(path, Text.Length(relativeTo) + 1)
+in
+    Table.AddColumn(#"Filtered hidden files", "Relative Path", each getRelativePath(combinePaths([Folder Path], [Name]), rootPath), type text),
+  #"Invoke custom function" = Table.AddColumn(#"Added custom", "Transform file (2)", each #"Transform file (2)"([Content])),
+  #"Renamed columns" = Table.RenameColumns(#"Invoke custom function", {{"Relative Path", "Source.Name"}}),
+  #"Removed other columns" = Table.SelectColumns(#"Renamed columns", {"Source.Name", "Transform file (2)"}),
+  #"Expanded table column" = Table.ExpandTableColumn(#"Removed other columns", "Transform file (2)", Table.ColumnNames(#"Transform file (2)"(#"Sample file (2)"))),
+  #"Changed column type" = Table.TransformColumnTypes(#"Expanded table column", {{"requestId", Int64.Type}, {"scheduleName", type text}, {"requestTime", type text}, {"triggerTime", type datetime}}),
+  #"Filtered rows 1" = Table.SelectRows(#"Changed column type", each ([requestId] <> null)),
+  #"Added custom 1" = Table.TransformColumnTypes(Table.AddColumn(#"Filtered rows 1", "Archived", each if [Source.Name]="bp_processQueue.csv" then false else true), {{"Archived", type logical}}),
+  #"Removed columns" = Table.RemoveColumns(#"Added custom 1", {"Source.Name"}),
+  #"Added index" = Table.AddIndexColumn(#"Removed columns", "Index", 1, 1, Int64.Type)
+in
+  #"Added index"

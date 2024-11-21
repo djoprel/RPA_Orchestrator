@@ -1,0 +1,11 @@
+let
+  Source = Csv.Document(File.Contents("---INSERT DATASHARE FOLDER---\bp_orchestratorCommands.csv"), [Delimiter = "|", Columns = 5, QuoteStyle = QuoteStyle.None]),
+  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+  #"Split column by delimiter" = Table.SplitColumn(#"Promoted headers", "datetime", Splitter.SplitTextByDelimiter("_"), {"datetime.1", "datetime.2"}),
+  #"Replaced value" = Table.ReplaceValue(#"Split column by delimiter", "-", ":", Replacer.ReplaceText, {"datetime.2"}),
+  #"Merged columns" = Table.CombineColumns(#"Replaced value", {"datetime.1", "datetime.2"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None), "datetime"),
+  #"Added index" = Table.AddIndexColumn(#"Merged columns", "Index", 1, 1, Int64.Type),
+  #"Changed column type" = Table.TransformColumnTypes(#"Added index", {{"datetime", type datetime}, {"Index", type text}}),
+  #"Added custom" = Table.TransformColumnTypes(Table.AddColumn(#"Changed column type", "GUID", each Text.NewGuid()), {{"GUID", type text}})
+in
+  #"Added custom"

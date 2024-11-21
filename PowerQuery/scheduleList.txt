@@ -1,0 +1,10 @@
+let
+  Source = Sql.Database("---INSERT DATABASE SERVER---", "---INSERT DATABASE NAME---"),
+  #"Navigation 1" = Source{[Schema = "dbo", Item = "BPASchedule"]}[Data],
+  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"id", Int64.Type}, {"name", type text}, {"description", type text}, {"initialtaskid", Int64.Type}, {"retired", type logical}, {"versionno", Int64.Type}, {"deletedname", type text}}),
+  #"Filtered rows" = Table.SelectRows(#"Changed column type", each ([name] <> null) and ([name] <> "")),
+  #"Added index" = Table.AddIndexColumn(#"Filtered rows", "Index", 1, 1, Int64.Type),
+  #"Added custom" = Table.TransformColumnTypes(Table.AddColumn(#"Added index", "GUID", each Text.NewGuid()), {{"GUID", type text}}),
+  #"Changed column type 1" = Table.TransformColumnTypes(#"Added custom", {{"Index", type text}})
+in
+  #"Changed column type 1"

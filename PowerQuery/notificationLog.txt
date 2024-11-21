@@ -1,0 +1,23 @@
+let
+  Source = Folder.Files("---INSERT DATASHARE FOLDER---"),
+  #"Filtered rows" = Table.SelectRows(Source, each Text.StartsWith([Name], "bp_notification")),
+  #"Filtered hidden files" = Table.SelectRows(#"Filtered rows", each [Attributes]?[Hidden]? <> true),
+  #"Added custom" = let
+    rootPath = Text.TrimEnd(Value.Metadata(Value.Type(#"Filtered hidden files"))[FileSystemTable.RootPath]?, "\"),
+    combinePaths = (path1, path2) => Text.Combine({Text.TrimEnd(path1, "\"), path2}, "\"),
+    getRelativePath = (path, relativeTo) => Text.Middle(path, Text.Length(relativeTo) + 1)
+in
+    Table.AddColumn(#"Filtered hidden files", "Relative Path", each getRelativePath(combinePaths([Folder Path], [Name]), rootPath), type text),
+  #"Invoke custom function" = Table.AddColumn(#"Added custom", "Transform file", each #"Transform file"([Content])),
+  #"Renamed columns" = Table.RenameColumns(#"Invoke custom function", {{"Relative Path", "Source.Name"}}),
+  #"Removed other columns" = Table.SelectColumns(#"Renamed columns", {"Source.Name", "Transform file"}),
+  #"Expanded table column" = Table.ExpandTableColumn(#"Removed other columns", "Transform file", Table.ColumnNames(#"Transform file"(#"Sample file"))),
+  #"Changed column type" = Table.TransformColumnTypes(#"Expanded table column", {{"Column1", type text}, {"Column2", type text}, {"Column3", type text}, {"Column4", type text}, {"Column5", type text}}),
+  #"Replaced value" = Table.ReplaceValue(#"Changed column type", "bp_notificationLog", "", Replacer.ReplaceText, {"Source.Name"}),
+  #"Replaced value 1" = Table.ReplaceValue(#"Replaced value", ".csv", "", Replacer.ReplaceText, {"Source.Name"}),
+  #"Removed duplicates" = Table.Distinct(#"Replaced value 1", {"Column1", "Column2", "Column3", "Column4"}),
+  #"Promoted headers" = Table.PromoteHeaders(#"Removed duplicates", [PromoteAllScalars = true]),
+  #"Renamed columns 1" = Table.RenameColumns(#"Promoted headers", {{Table.ColumnNames(#"Promoted headers"){0}, "location"}}),
+  #"Added index" = Table.AddIndexColumn(#"Renamed columns 1", "Index", 1, 1, Int64.Type)
+in
+  #"Added index"

@@ -1,0 +1,8 @@
+let
+  Source = Sql.Database("---INSERT DATABASE SERVER---", "---INSERT DATABASE NAME---"),
+  #"Navigation 1" = Source{[Schema = "dbo", Item = "BPAWorkQueue"]}[Data],
+  #"Added index" = Table.AddIndexColumn(#"Navigation 1", "Index", 1, 1, Int64.Type),
+  #"Changed column type" = Table.TransformColumnTypes(#"Added index", {{"id", type text}, {"name", type text}, {"keyfield", type text}, {"running", type logical}, {"maxattempts", Int64.Type}, {"DefaultFilterID", type text}, {"ident", Int64.Type}, {"processid", type text}, {"resourcegroupid", type text}, {"targetsessions", Int64.Type}, {"activelock", type text}, {"activelocktime", type text}, {"activelockname", type text}, {"encryptid", type text}, {"lastsnapshotid", type text}, {"snapshotconfigurationid", type text}, {"sessionexceptionretry", type logical}, {"Index", type text}}),
+  #"Added custom" = Table.TransformColumnTypes(Table.AddColumn(#"Changed column type", "GUID", each Text.NewGuid()), {{"GUID", type text}})
+in
+  #"Added custom"
